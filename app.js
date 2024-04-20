@@ -8,45 +8,53 @@ const port = 3000;
 app.post('/checkCredentials', async (req, res) => {
     const requestBody = req.body
     if (requestBody.credentialsType === "authToken") {
-        const url = `https://${requestBody.projectRegion}-aiplatform.googleapis.com/v1/projects/${requestBody.projectId}/locations/${requestBody.projectRegion}/publishers/google/models/chat-bison:predict`;
-        const requestData = {
-			instances: [{
-				messages: [{
-					author: "user",
-					content: "test message to validate credentials!"
-				}],
-			}],
-			parameters: {
-				temperature: 0.3,
-				maxOutputTokens: 200,
-				topP: 0.8,
-				topK: 40,
-			},
-		};
-        const headers = {
-			Authorization: `Bearer ${requestBody.authToken}`,
-			'Content-Type': 'application/json',
-		};
-        const requestOption = {
-            method: "post",
-            url: url,
-            headers: headers,
-            data: requestData,
-        }
-        const response = await fetch(url, requestOption)
-        console.log(response.status)
-        console.log(response.statusText)
-        if (response.status === 200) {
-            res.send({status: "valid credentials"})
-        } else {
-            res.send({status: "invalid credentials"})
-        }
+        const isValid =  await fetchResponseAuthToken(requestBody.projectRegion, requestBody.projectId, requestBody.authToken)
+        const response = isValid === true ? {status: "valid credentials"} : {status: "invalid credentials", error: isValid.statusText}
+        res.send(response)
     } else if (requestBody.checkType === "authService") {
         
     } else if (requestBody.checkType === "authGemini") {
             
     }
 })
+
+async function fetchResponseAuthToken(region, projectId, authToken, temperature, maxOutputTokens, context) {
+    const url = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/chat-bison:predict`;
+    const requestData = {
+        instances: [{
+            messages: [{
+                author: "user",
+                content: "test message to validate credentials!"
+            }],
+        }],
+        parameters: {
+            temperature: temperature || 0.3,
+            maxOutputTokens: maxOutputTokens || 200,
+            topP: 0.8,
+            topK: 40,
+        },
+    };
+    const headers = {
+        Authorization: `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+    };
+    const requestOption = {
+        method: "post",
+        url: url,
+        headers: headers,
+        data: requestData,
+    }
+    console.log(requestData)
+    const response = await fetch(url, requestOption)
+    if (response.status === 200) {
+        return true
+    } else {
+        return response
+    }
+}
+
+
+
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
