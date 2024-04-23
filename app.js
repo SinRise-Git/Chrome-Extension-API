@@ -1,4 +1,5 @@
 const express = require('express');
+const {VertexClient} = require('@google-cloud/vertex-ai');
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -18,14 +19,15 @@ app.post('/checkCredentials', async (req, res) => {
     }
 })
 
-async function fetchResponseAuthToken(region, projectId, authToken, temperature, maxOutputTokens, context) {
+async function fetchResponseAuthToken(region, projectId, authToken, temperature, maxOutputTokens, context, message) {
     const url = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/chat-bison:predict`;
     const requestData = {
         instances: [{
             messages: [{
                 author: "user",
-                content: "test message to validate credentials!"
+                content: message || "test message to validate credentials!"
             }],
+            context: context || ""
         }],
         parameters: {
             temperature: temperature || 0.3,
@@ -44,13 +46,32 @@ async function fetchResponseAuthToken(region, projectId, authToken, temperature,
         headers: headers,
         data: requestData,
     }
-    console.log(requestData)
     const response = await fetch(url, requestOption)
     if (response.status === 200) {
         return true
     } else {
         return response
     }
+}
+
+async function featchResponeAuthGemini(API_Key, temperature, maxOutputTokens, context, message) {
+    const genAI = new GoogleGenerativeAI(API_Key)
+    const model = genAI.getGenerativeModel({ model: "gemini-pro"});
+    const context = context || "";
+    const prompt = `${context} - ${message}`;
+    const result = await model.generateContent({
+        prompt: prompt,
+        temperature: temperature || 0.3,
+        maxOutputTokens: maxOutputTokens || 200
+    });
+    const text = response.text();
+    const response = await result.response;
+    if (response.statusCode === 200){
+        return true
+    } else{
+        return false
+    }
+
 }
 
 
