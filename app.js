@@ -12,10 +12,10 @@ app.post('/checkCredentials', async (req, res) => {
         const isValid =  await fetchResponseAuthToken(requestBody.projectRegion, requestBody.projectId, requestBody.authToken)
         const response = isValid === true ? {status: "valid credentials"} : {status: "invalid credentials", error: isValid.statusText}
         res.send(response)
-    } else if (requestBody.checkType === "authService") {
-        
     } else if (requestBody.checkType === "authGemini") {
-            
+        const isValid = await featchResponeAuthGemini(requestBody.API_Key, requestBody.temperature, requestBody.maxOutputTokens, requestBody.context, requestBody.message)
+        const response = isValid === true ? {status: "valid credentials"} : {status: "invalid credentials", error: isValid.statusText}
+        res.send(response)
     }
 })
 
