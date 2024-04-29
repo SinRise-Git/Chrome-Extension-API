@@ -10,7 +10,7 @@ app.post('/checkCredentials', async (req, res) => {
     const requestBody = req.body
     if (requestBody.credentialsType === "authToken") {
         const isValid =  await fetchResponseAuthToken(requestBody.projectRegion, requestBody.projectId, requestBody.authToken)
-        const response = isValid.status === true ? {status: "valid credentials"} : {status: "invalid credentials", error: isValid.error.statusText}
+        const response = isValid.status === true ? {status: "valid credentials"} : {status: "invalid credentials", error: isValid.error}
         res.send(response)
     } else if (requestBody.credentialsType === "authGemini") {
         const isValid = await featchResponeAuthGemini(requestBody.studioKey)
