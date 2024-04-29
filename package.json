@@ -8,12 +8,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/aiplatform": "^3.19.1",
+    "@google/generative-ai": "^0.8.0",
     "axios": "^1.6.8",
     "express": "^4.19.2",
     "node-fetch": "^3.3.2",
     "nodemon": "^3.1.0",
     "path": "^0.12.7"
   },
-  "devDependencies": {},
   "description": ""
 }

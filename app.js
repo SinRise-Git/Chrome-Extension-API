@@ -1,5 +1,5 @@
 const express = require('express');
-const {VertexClient} = require('@google-cloud/vertex-ai');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -10,11 +10,12 @@ app.post('/checkCredentials', async (req, res) => {
     const requestBody = req.body
     if (requestBody.credentialsType === "authToken") {
         const isValid =  await fetchResponseAuthToken(requestBody.projectRegion, requestBody.projectId, requestBody.authToken)
-        const response = isValid === true ? {status: "valid credentials"} : {status: "invalid credentials", error: isValid.statusText}
+        const response = isValid.status === true ? {status: "valid credentials"} : {status: "invalid credentials", error: isValid.error.statusText}
         res.send(response)
-    } else if (requestBody.checkType === "authGemini") {
-        const isValid = await featchResponeAuthGemini(requestBody.API_Key, requestBody.temperature, requestBody.maxOutputTokens, requestBody.context, requestBody.message)
-        const response = isValid === true ? {status: "valid credentials"} : {status: "invalid credentials", error: isValid.statusText}
+    } else if (requestBody.credentialsType === "authGemini") {
+        const isValid = await featchResponeAuthGemini(requestBody.studioKey)
+        console.log(isValid)
+        const response = isValid.status === true ? {status: "valid credentials"} : {status: "invalid credentials", error: isValid.error}
         res.send(response)
     }
 })
@@ -48,34 +49,29 @@ async function fetchResponseAuthToken(region, projectId, authToken, temperature,
     }
     const response = await fetch(url, requestOption)
     if (response.status === 200) {
-        return true
+        return {status: true, text: "valid"}
     } else {
-        return response
+        return {status: false, error: response.statusText}
     }
 }
 
 async function featchResponeAuthGemini(API_Key, temperature, maxOutputTokens, context, message) {
-    const genAI = new GoogleGenerativeAI(API_Key)
-    const model = genAI.getGenerativeModel({ model: "gemini-pro"});
-    const context = context || "";
-    const prompt = `${context} - ${message}`;
-    const result = await model.generateContent({
-        prompt: prompt,
-        temperature: temperature || 0.3,
-        maxOutputTokens: maxOutputTokens || 200
-    });
-    const text = response.text();
-    const response = await result.response;
-    if (response.statusCode === 200){
-        return true
-    } else{
-        return false
+    try {
+        const genAI = new GoogleGenerativeAI(API_Key);
+        const generationConfig = {
+            maxOutputTokens: maxOutputTokens || 200,
+            temperature: temperature || 0.9,
+        };
+        const model = genAI.getGenerativeModel({ model: "gemini-pro", generationConfig});
+        const prompt = `${context || ""} - ${message}`;
+        const result = await model.generateContent(prompt);
+        const response = result.response;
+        const text = response.text(); 
+        return {status: true, text: text}
+    } catch (error) {
+        return {status: false, error: "Invalid API Key"};
     }
-
 }
-
-
-
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
